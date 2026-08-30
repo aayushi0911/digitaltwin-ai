@@ -298,4 +298,3 @@ The current simulation uses:
 * 18:00 service window
 
 ---
-```
