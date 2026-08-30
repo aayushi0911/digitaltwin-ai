@@ -1,5 +1,4 @@
 
-````md
 # DIGITALTWIN.AI
 
 DIGITALTWIN.AI is a decision twin for mixed-model vehicle assembly lines. It monitors production conditions, identifies emerging bottlenecks and defect risks, investigates possible causes using available evidence, simulates different corrective actions, and compares predicted outcomes with actual results. It also handles stations with limited sensor coverage by combining available sensor data with computer vision, neighbouring-station data, and historical information. When confidence is low, the twin does not make a recommendation. Instead, it identifies the evidence it needs, updates its confidence as that evidence is collected, and only then proceeds to causal reasoning and scenario simulation.
