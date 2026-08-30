@@ -1,153 +1,302 @@
+
+````md
 # DIGITALTWIN.AI
 
-A decision twin for a mixed-model vehicle assembly line, built for the Accenture
-Innovation Challenge 2026 by **clock_it**.
+DIGITALTWIN.AI is a decision twin for mixed-model vehicle assembly lines. It monitors production conditions, identifies emerging bottlenecks and defect risks, investigates possible causes using available evidence, simulates different corrective actions, and compares predicted outcomes with actual results. It also handles stations with limited sensor coverage by combining available sensor data with computer vision, neighbouring-station data, and historical information. When confidence is low, the twin does not make a recommendation. Instead, it identifies the evidence it needs, updates its confidence as that evidence is collected, and only then proceeds to causal reasoning and scenario simulation.
 
-It demonstrates one complete loop on simulated production data:
+The complete decision loop is:
 
-> **predict → investigate → simulate → decide → learn**
-
-The single idea worth remembering:
-
-> When the twin is unsure, it does not guess. It says what it needs, asks you to fetch it,
-> updates its confidence, and only then reasons.
-
-This is enforced in the **API**, not just the interface — `/api/causes` and `/api/scenarios`
-return **HTTP 409** while confidence sits below 70%.
+**Predict → Investigate → Simulate → Decide → Learn**
 
 ---
 
 ## Run it
 
+### Quick start
+
 ```bash
 ./run.sh          # macOS / Linux
 run.bat           # Windows
+````
+
+Open:
+
+```text
+http://localhost:5173
 ```
 
-Open **http://localhost:5173**.
+### Manual setup
 
-Or manually, in two terminals:
+#### 1. Start the backend
 
 ```bash
-# 1 — backend
 cd backend
-python3 -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
+
+python3 -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
+
 pip install -r requirements.txt
+
 uvicorn app.main:app --port 8000 --reload
-
-# 2 — frontend
-cd frontend && npm install && npm run dev
 ```
 
-Needs **Python 3.10+** and **Node 18+**. Nothing else — no Docker, no database, no API keys.
-API docs at http://localhost:8000/docs.
+#### 2. Start the frontend
 
----
+```bash
+cd frontend
 
-## The 3-minute demo
-
-1. **Click ⚡ Trigger scenario** (bottom left). The 3D factory is already live — parts flow
-   down the line as violet particles.
-2. **Click Final Assembly**, then **click the red station block**. The camera pushes in and a
-   card floats up beside it. Station 17 is on **20% sensor coverage**, so violet beads run
-   inward showing what the twin is inferring from instead.
-3. **Inference** — defect risk is 82%, but confidence is only **54%**. No recommendation
-   appears. Instead the twin lists four things worth checking. Click them; confidence climbs
-   **54 → 70 → 84 → 94%** and the next page unlocks at 70.
-4. **Reason** — a cause map draws itself outward from Station 17. Machine wear at 61%,
-   supported. Part quality and environment drawn as dashed, **ruled out on evidence**.
-   Operator movement is real but started *after* the tool slowed — a symptom, not a cause.
-5. **Rehearse** — four futures. Click each and the predicted queue animates: "Do nothing"
-   grows it red, "Adjust" drains it green. Then **Approve**.
-6. **Learn** — predicted a 51-point drop, got 48. **94% accurate**, not 100%. You mark whether
-   the call was right, and that verdict is what the twin keeps.
-7. **Scale** — the same twin across three plants at 91 / 74 / 52% coverage.
-
-Use **1× / 3× / 5×** to fast-forward, **Reset line** to start over.
-
----
-
-## Three choices worth defending
-
-**Fixing the symptom doesn't fix the machine.** Adjusting the parameter recovers cycle time,
-but defect risk settles at ~34% rather than zero, because the underlying wear is still there.
-The twin says so and books service for the 18:00 window. This is why prediction-vs-reality
-shows a genuine 94% instead of a suspicious 100%.
-
-**Operator variation is never the verdict.** Camera evidence is framed as *process observation*.
-It confirms movement went up, and simultaneously rules the operator out as the cause — with a
-timing argument, not a hand-wave.
-
-**Instrumentation honesty is visual.** Fully sensed stations look solid. Shadow-sensed stations
-get dashed violet feeds from camera, neighbouring stations and history. They are never mixed up,
-so "we can't measure this, we're inferring it" reads at a glance.
-
----
-
-## What's inside
-
+npm install
+npm run dev
 ```
+
+### Requirements
+
+* Python 3.10+
+* Node.js 18+
+* No Docker
+* No database
+* No API keys
+
+API documentation is available at:
+
+[http://localhost:8000/docs](http://localhost:8000/docs)
+
+---
+
+## How the Demo Works
+
+### 1. Trigger the scenario
+
+Click **Trigger scenario** from the bottom-left corner.
+
+The 3D factory starts running, with parts moving through the assembly line.
+
+### 2. Investigate Station 17
+
+Select **Final Assembly** and click the red station block.
+
+The view focuses on Station 17 and displays its current production state.
+
+Station 17 has only **20% sensor coverage**. The twin therefore combines the available information with inferred signals from computer vision, neighbouring stations, and historical data.
+
+### 3. Gather evidence
+
+The initial defect risk is **82%**, but the confidence in the diagnosis is only **54%**.
+
+The twin does not provide a recommendation at this point. Instead, it identifies four pieces of evidence that can be checked.
+
+As evidence is collected, confidence increases:
+
+```text
+54% → 70% → 84% → 94%
+```
+
+The reasoning stage becomes available once confidence reaches 70%.
+
+This rule is enforced in the API as well. `/api/causes` and `/api/scenarios` return **HTTP 409** when confidence is below 70%.
+
+### 4. Identify the cause
+
+The cause map is generated around Station 17.
+
+The demonstration identifies:
+
+* **Machine wear — 61%:** supported by the available evidence
+* **Part quality:** ruled out
+* **Environment:** ruled out
+* **Operator movement:** observed, but occurred after the tool slowed down
+
+The operator activity is therefore treated as a process observation rather than the root cause.
+
+### 5. Rehearse possible actions
+
+The Rehearse page presents four possible actions.
+
+Selecting a scenario shows how the predicted queue changes over time.
+
+For example:
+
+* **Do Nothing:** queue continues to increase
+* **Adjust:** queue decreases and cycle time recovers
+
+The selected action can then be **Approved, Modified, or Rejected** by the user.
+
+### 6. Compare prediction with reality
+
+The twin predicts a **51-point improvement** and the observed result is a **48-point improvement**.
+
+This produces a **94% accuracy** for the prediction.
+
+The user can then provide a human verdict on whether the decision was correct. This feedback is recorded by the learning layer.
+
+### 7. Scale across plants
+
+The Scale page shows the same twin operating across three plants with different levels of sensor coverage:
+
+```text
+Plant 1    91%
+Plant 2    74%
+Plant 3    52%
+```
+
+The interface also supports **1× / 3× / 5×** simulation speed and **Reset line** to restart the scenario.
+
+---
+
+## Key Design Principles
+
+### Evidence before recommendation
+
+When confidence is below the required threshold, the twin does not guess.
+
+It identifies what additional evidence is needed, collects it, updates confidence, and only then generates causes and scenarios.
+
+This behaviour is enforced at the API level rather than being limited to the UI.
+
+### Root cause vs. symptom
+
+Correcting a process parameter can recover cycle time without removing the underlying machine issue.
+
+In the demonstration, adjusting the parameter reduces the defect risk to approximately **34%**, but does not eliminate it because machine wear remains.
+
+The twin therefore separates immediate recovery from the underlying maintenance requirement and schedules service for the available **18:00 window**.
+
+### Operator activity as process evidence
+
+Computer vision is used to observe process behaviour.
+
+An increase in operator movement is detected, but the timing shows that the movement increased only after the tool had already slowed down. The twin therefore does not classify the operator as the cause.
+
+### Measured vs. inferred information
+
+The interface clearly distinguishes between directly measured data and inferred information.
+
+Fully instrumented stations use solid data connections.
+
+Stations with limited sensor coverage use dashed violet connections to represent information inferred from:
+
+* Computer vision
+* Neighbouring stations
+* Historical data
+
+This makes sensor limitations visible instead of hiding them.
+
+---
+
+## Architecture
+
+```text
 digitaltwin-ai/
-├── run.sh / run.bat
-├── backend/                    FastAPI — ~380 lines total
+│
+├── run.sh
+├── run.bat
+│
+├── backend/
 │   ├── requirements.txt
 │   └── app/
-│       ├── state.py            The whole simulation: one wear variable drives everything
-│       └── main.py             REST + WebSocket
-└── frontend/                   React 18 + Vite + three.js + framer-motion
+│       ├── state.py
+│       └── main.py
+│
+└── frontend/
     └── src/
-        ├── App.jsx             Shell, rail, live clock, 3D stage
-        ├── api.js              REST client + auto-reconnecting WebSocket
-        ├── styles.css          Dark premium design system (no CSS framework)
-        ├── three/factory.js    The 3D factory: boxes, particles, camera easing
-        └── pages/              Overview · Data · Inference · Reason · Rehearse · Learn · Scale
+        ├── App.jsx
+        ├── api.js
+        ├── styles.css
+        │
+        ├── three/
+        │   └── factory.js
+        │
+        └── pages/
+            ├── Overview
+            ├── Data
+            ├── Inference
+            ├── Reason
+            ├── Rehearse
+            ├── Learn
+            └── Scale
 ```
 
-**Simulation runs on the server.** The browser is a thin client rendering snapshots pushed over
-`ws://localhost:8000/ws` twice a second. Refresh the page and nothing is lost. Open two windows
-and they stay in sync.
+### Backend
 
-**Deliberately small model.** One latent variable (`wear`) drives a real causal chain:
+The backend is built with **FastAPI** and manages the complete simulation state.
 
+The simulation runs on the server and the frontend receives state snapshots through a WebSocket connection:
+
+```text
+ws://localhost:8000/ws
 ```
-wear ─→ cycle time ─→ queue ─→ throughput
-     └─→ defect risk
-```
 
-No torque, no vibration, no temperature. Two honest numbers per station — cycle time and defect
-risk — because the demo is about the *decision process*, not sensor breadth.
+Snapshots are pushed twice per second.
 
-### Key endpoints
+Because the simulation state is maintained on the server, refreshing the browser does not reset the scenario. Multiple browser windows remain synchronized.
 
-| Method | Path | Notes |
-| --- | --- | --- |
-| `WS` | `/ws` | Live snapshot stream |
-| `GET` | `/api/snapshot` | Full state |
-| `GET` | `/api/evidence` | Options + what's been gathered |
-| `POST` | `/api/evidence/{id}` | Fetch evidence, raise confidence |
-| `GET` | `/api/causes` | Ranked causes — **409 below 70%** |
-| `GET` | `/api/scenarios` | Four options — **409 below 70%** |
-| `POST` | `/api/decision` | approve / modify / reject |
-| `GET` | `/api/outcome` | Predicted vs actual |
-| `POST` | `/api/feedback` | Human verdict closes the loop |
+### Frontend
+
+The frontend uses:
+
+* React 18
+* Vite
+* Three.js
+* Framer Motion
+* Custom CSS
+
+The 3D factory visualization is rendered using Three.js.
 
 ---
 
-## Prototype boundaries
+## Simulation Model
 
-- **All data is simulated.** No plant, historian or camera is connected.
-- **The learning layer is a simulation.** It records outcomes and human verdicts and adjusts a
-  running accuracy figure. It does **not** train a model, and the UI labels it as such.
-- **The twin only reads.** It never writes to a PLC. Every action needs human approval —
-  which is exactly why the Rehearse page ends in Approve / Modify / Reject.
-- **Numbers are illustrative** and stated inline (60s takt, 42 stations, 24h × 6 days with an
-  18:00 service window).
+The simulation intentionally uses a small causal model.
 
-## Troubleshooting
+A single latent variable, `wear`, drives the main production effects:
 
-**"Backend not reachable"** — start it on port 8000; the page reconnects on its own, no refresh.
+```text
+                    ┌──> Cycle Time ──> Queue ──> Throughput
+Wear ───────────────┤
+                    └──> Defect Risk
+```
 
-**Port in use** — run `uvicorn app.main:app --port 8001` and update the two proxy targets in
-`frontend/vite.config.js`.
+The model focuses on two main station-level outputs:
 
-**Blank 3D area** — needs WebGL. Any browser from the last five years is fine.
+* Cycle time
+* Defect risk
+
+This keeps the simulation focused on the decision process rather than attempting to reproduce a complete industrial control model.
+
+---
+
+## API
+
+| Method | Endpoint             | Description                                                     |
+| ------ | -------------------- | --------------------------------------------------------------- |
+| `WS`   | `/ws`                | Live simulation snapshot stream                                 |
+| `GET`  | `/api/snapshot`      | Returns the current simulation state                            |
+| `GET`  | `/api/evidence`      | Returns available and collected evidence                        |
+| `POST` | `/api/evidence/{id}` | Collects evidence and updates confidence                        |
+| `GET`  | `/api/causes`        | Returns ranked causes; returns `409` below 70% confidence       |
+| `GET`  | `/api/scenarios`     | Returns available scenarios; returns `409` below 70% confidence |
+| `POST` | `/api/decision`      | Approves, modifies, or rejects a decision                       |
+| `GET`  | `/api/outcome`       | Returns predicted and actual outcomes                           |
+| `POST` | `/api/feedback`      | Records the human verdict                                       |
+
+---
+
+## Prototype Scope
+
+* All production data is simulated.
+* No real plant historian, PLC, or camera system is connected.
+* The learning layer records outcomes and human feedback and updates a running accuracy measure.
+* The learning layer does not train a machine-learning model.
+* The twin is read-only and does not write to PLCs or other control systems.
+* Every operational action requires human approval through **Approve / Modify / Reject**.
+* Numerical values are illustrative.
+
+The current simulation uses:
+
+* 60-second takt time
+* 42 assembly stations
+* 24-hour × 6-day operating schedule
+* 18:00 service window
+
+---
+```
